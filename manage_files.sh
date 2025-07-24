@@ -60,7 +60,7 @@ move_file() {
 
 
 # directory where script would take action
-PWD="/home/shobhit/Downloads/"
+PWD="/path/to/directory/"
 
 while true; do
   # create Files array containing all file names
