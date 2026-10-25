@@ -90,8 +90,8 @@ directory at a time.
   they are renamed or finished.
 - **Nothing is overwritten.** A second `photo.jpg` becomes `photo (1).jpg`,
   then `photo (2).jpg`, and so on.
-- **Safe defaults.** Hidden files and symlinks are left alone unless you opt
-  in with `-a`; the running script is never moved.
+- **Safe defaults.** Hidden files are left alone unless you opt in with `-a`;
+  symlinks are never moved, and the running script is never moved.
 - **Recursive mode flattens.** Files in subdirectories are moved into the
   category folders at the target root. Files already inside a category folder
   are left where they are.
@@ -109,7 +109,7 @@ The watcher also refuses to move a file that is still held open (checked with
 
 | Editor | Companion file that blocks the move |
 | --- | --- |
-| Vim / Kate | `.file.swp`, `.file.swo`, `.file.kate-swp` |
+| Vim / Kate | `.file.swp`, `.file.swo`, `.file.swn`, `.file.kate-swp` |
 | LibreOffice | `.~lock.file#` |
 | MS Office / WPS | `~$file` |
 | Emacs | `.#file` |
@@ -145,6 +145,10 @@ directories can be watched at the same time. Logs are timestamped and are
 rotated to `.log.1` at startup when they exceed 5 MB. `stop` sends `SIGTERM`
 and waits up to 10 seconds before forcing the process down.
 
+A single watcher owns each directory through its lock: a second `start` is
+refused, and `once` will not run while a watcher is active. Dry runs do not
+take the lock.
+
 ### systemd user service
 
 For automatic start at login, use the foreground `run` command instead of
@@ -173,6 +177,21 @@ Save it as `~/.config/systemd/user/folder-manager.service`, then:
 systemctl --user daemon-reload
 systemctl --user enable --now folder-manager.service
 ```
+
+Manage it through systemd from then on:
+
+```bash
+systemctl --user status folder-manager.service
+systemctl --user restart folder-manager.service
+systemctl --user stop folder-manager.service
+systemctl --user disable --now folder-manager.service   # stop + remove autostart
+journalctl --user -u folder-manager.service -f          # follow the log
+```
+
+Use `systemctl --user stop` rather than `./manage_files.sh stop` for a
+service-managed watcher. The script exits cleanly, and `Restart=on-failure`
+will not bring a cleanly stopped unit back. Restart the unit after editing
+`manage_files.sh` so the new code is loaded.
 
 ## Customizing categories
 
